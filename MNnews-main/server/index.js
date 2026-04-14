@@ -441,6 +441,102 @@ app.patch('/api/auth/profile/:username', async (req, res) => {
     }
 });
 
+// --- Управление новостями (Админ) ---
+
+// Создание новости
+app.post('/api/news', async (req, res) => {
+    try {
+        const { title, content, image, actor } = req.body || {};
+        if (!title || !content) {
+            return res.status(400).json({ error: 'Title and content are required.' });
+        }
+
+        const users = await readUsers();
+        if (!ensureAdmin(users, actor)) {
+            return res.status(403).json({ error: 'Only admin can create news.' });
+        }
+
+        const items = await readNews();
+        const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
+        
+        const newItem = {
+            id: newId,
+            title,
+            content,
+            image: image || '',
+            date: new Date().toISOString(),
+            category: 'current'
+        };
+
+        items.unshift(newItem);
+        await writeJson(NEWS_FILE, items);
+        res.status(201).json(newItem);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create news.' });
+    }
+});
+
+// Редактирование новости
+app.put('/api/news/:id', async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params.id, 10);
+        const { title, content, image, actor } = req.body || {};
+
+        const users = await readUsers();
+        if (!ensureAdmin(users, actor)) {
+            return res.status(403).json({ error: 'Only admin can edit news.' });
+        }
+
+        const items = await readNews();
+        const index = items.findIndex(n => n.id === id);
+        
+        if (index === -1) {
+            return res.status(404).json({ error: 'News not found.' });
+        }
+
+        items[index] = {
+            ...items[index],
+            title: title || items[index].title,
+            content: content || items[index].content,
+            image: image !== undefined ? image : items[index].image
+        };
+
+        await writeJson(NEWS_FILE, items);
+        res.json(items[index]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update news.' });
+    }
+});
+
+// Удаление новости
+app.delete('/api/news/:id', async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params.id, 10);
+        const { actor } = req.query; // Получаем actor из query параметров для DELETE
+
+        const users = await readUsers();
+        if (!ensureAdmin(users, actor)) {
+            return res.status(403).json({ error: 'Only admin can delete news.' });
+        }
+
+        let items = await readNews();
+        const initialLength = items.length;
+        items = items.filter(n => n.id !== id);
+
+        if (items.length === initialLength) {
+            return res.status(404).json({ error: 'News not found.' });
+        }
+
+        await writeJson(NEWS_FILE, items);
+        res.json({ message: 'Deleted' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete news.' });
+    }
+});
+
 app.use(express.static(ROOT_DIR));
 
 app.get('*', (req, res) => {

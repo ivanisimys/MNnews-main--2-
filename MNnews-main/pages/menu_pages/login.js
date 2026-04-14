@@ -117,6 +117,11 @@ function applyProfile(user) {
     if (requestsLink) {
         requestsLink.style.display = canUseAdminTools ? 'inline-block' : 'none';
     }
+
+    const adminPanelLink = document.querySelector('#adminPanelLink');
+    if (adminPanelLink) {
+        adminPanelLink.style.display = canUseAdminTools ? 'inline-block' : 'none';
+    }
 }
 
 async function loadCurrentProfile() {
