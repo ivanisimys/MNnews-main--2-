@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MN News - Вход и регистрация</title>
+    <link rel="stylesheet" href="login.styles.css">
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <img src="../../img/photo_2025-04-25_18-04-30.jpg" alt="Логотип MN News" class="logo">
+            <ul class="menu">
+                <li class="menu__item"><a href="../../index.html">Новости</a></li>
+                <li class="menu__item"><a href="AboutUs.html">О нас</a></li>
+                <li class="menu__item"><a href="media.html">Медиа раздел</a></li>
+                <li class="menu__item login"><a id="exit" href="login.html">Выход</a></li>
+            </ul>
+        </header>
+
+        <main>
+            <div class="columns">
+                <section class="left-column auth-hero">
+                    <p class="auth-hero__badge">MN News Account</p>
+                    <h1 class="auth-hero__title">Вход в аккаунт редакции</h1>
+                    <p class="auth-hero__text">Авторизуйтесь, чтобы просматривать профиль игрока и работать с админ-панелью сервера MineNilla.</p>
+                </section>
+
+                <section class="right-column auth-container">
+                    <div class="auth-form-container">
+                        <div class="auth-switch" role="tablist" aria-label="Формы авторизации">
+                            <button id="showLogin" class="auth-switch__btn is-active" type="button">Вход</button>
+                            <button id="showRegister" class="auth-switch__btn" type="button">Регистрация</button>
+                        </div>
+
+                        <div class="login-form" id="loginFormBlock">
+                            <h2 class="slider">Вход</h2>
+                            <form id="login">
+                                <label for="login-email">Username</label>
+                                <input type="text" id="login-email" name="us" required>
+
+                                <label for="login-password">Пароль</label>
+                                <input type="password" id="login-password" name="password" required>
+                                <button type="submit">Войти</button>
+                            </form>
+                        </div>
+
+                        <div id="loginErrorPopup" class="popup-hidden">
+                            <div class="popup-content">
+                                <span class="popup-close">&times;</span>
+                                <p id="popupMessage"></p>
+                            </div>
+                        </div>
+
+                        <div class="register-form" id="registerFormBlock" style="display: none;">
+                            <h2 class="slider">Регистрация</h2>
+                            <form id="registerForm">
+                                <label for="reg-username">Имя пользователя</label>
+                                <input type="text" id="reg-username" name="username" required>
+
+                                <label for="reg-email">Email</label>
+                                <input type="email" id="reg-email" name="us" required>
+
+                                <label for="reg-password">Пароль</label>
+                                <input type="password" id="reg-password" name="password" required>
+
+                                <label for="reg-password-repeat">Повторите пароль</label>
+                                <input type="password" id="reg-password-repeat" name="password-repeat" required>
+
+                                <div class="checkbox-container">
+                                    <input type="checkbox" id="terms" name="terms" required>
+                                    <label for="terms">Согласен с <a href="/terms">условиями использования</a></label>
+                                </div>
+
+                                <button type="submit">Зарегистрироваться</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div class="player-card">
+        <h3>ПРОФИЛЬ ИГРОКА</h3>
+
+        <div class="info-row">
+            <div class="label">Никнейм:</div>
+            <div class="value" id="name">IronWarrior99</div>
+        </div>
+
+        <div class="info-row">
+            <div class="label">Должность:</div>
+            <div id="rank" class="value">Капитан гильдии</div>
+        </div>
+
+        <div class="info-row">
+            <div class="label">Репутация:</div>
+            <div id="rep" class="value">87</div>
+        </div>
+
+        <div class="info-row">
+            <div class="label">Гильдия:</div>
+            <div id="clan" class="value">Shadow Legion</div>
+        </div>
+
+        <div class="info-row">
+            <div class="label">Примечания:</div>
+            <div id="profile-notes" class="value">Активный участник PvP-турниров</div>
+        </div>
+
+        <div class="action-buttons">
+            <a id="requestsLink" class="requests-link" href="registration_requests.html" style="display:none;">Заявки на регистрацию</a>
+            <button id="profileLogoutBtn" class="btn-logout" type="button">Выйти из аккаунта</button>
+        </div>
+    </div>
+
+    <form id="admin_panel2" class="admin-player-form">
+        <h2>СОЗДАНИЕ АККАУНТА</h2>
+
+        <div class="form-group">
+            <label for="new_plname">Никнейм игрока:</label>
+            <input type="text" id="player-name_create" name="new_plname" required placeholder="Введите никнейм">
+        </div>
+
+        <div class="form-group">
+            <label for="new_password">Пароль</label>
+            <input type="text" id="pass_create" name="new_password" required placeholder="Укажите пароль">
+        </div>
+        <div class="action-buttons">
+            <button type="submit" class="btn-apply">Создать</button>
+        </div>
+    </form>
+
+    <form id="admin_panel" class="admin-player-form">
+        <h2>РЕДАКТИРОВАНИЕ ПРОФИЛЯ ИГРОКА (админ-панель)</h2>
+
+        <div class="form-group">
+            <label for="plname">Никнейм игрока:</label>
+            <input type="text" id="player-name" name="plname" required placeholder="Введите никнейм">
+        </div>
+
+        <div class="form-group">
+            <label for="position">Должность:</label>
+            <input type="text" id="position" name="position" placeholder="Укажите должность (например, «Хранитель рудников»)">
+        </div>
+
+        <div class="form-group">
+            <label for="reputation">Репутация (уровень):</label>
+            <input type="number" id="reputation" name="reputation" min="1" max="100" placeholder="1–100">
+        </div>
+
+        <div class="form-group">
+            <label for="guild">Гильдия:</label>
+            <input type="text" id="guild" name="guild" placeholder="Название гильдии">
+        </div>
+
+        <div class="form-group">
+            <label for="admin-notes">Комментарии:</label>
+            <textarea id="admin-notes" name="notes" rows="4" placeholder="Дополнительная информация об игроке..."></textarea>
+        </div>
+
+        <div class="action-buttons">
+            <button type="submit" class="btn-apply">Применить изменения</button>
+        </div>
+    </form>
+
+    <script src="../../app.js"></script>
+    <script src="login.js"></script>
+</body>
+</html>

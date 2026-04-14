@@ -1,0 +1,128 @@
+﻿[
+  {
+    "id": 1,
+    "category": "current",
+    "title": "Новый магазин в центральном районе",
+    "date": "2025-05-29",
+    "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus posuere velit aliquet.",
+    "lead": "Короткий анонс открытия нового торгового пространства на сервере.",
+    "content": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere consectetur est at lobortis.",
+      "Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla.",
+      "Curabitur blandit tempus porttitor. Praesent commodo cursus magna, vel scelerisque nisl consectetur et."
+    ],
+    "image": "https://placehold.co/500x400?text=MN+News"
+  },
+  {
+    "id": 2,
+    "category": "current",
+    "title": "Строительство торгового квартала",
+    "date": "2025-05-30",
+    "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere consectetur est at lobortis, aenean eu leo quam.",
+    "lead": "Сводка о расширении центральной зоны и новых торговых точках.",
+    "content": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas faucibus mollis interdum.",
+      "Nulla vitae elit libero, a pharetra augue. Cras justo odio, dapibus ac facilisis in, egestas eget quam.",
+      "Morbi leo risus, porta ac consectetur ac, vestibulum at eros."
+    ],
+    "image": "https://placehold.co/500x400?text=MN+News"
+  },
+  {
+    "id": 3,
+    "category": "current",
+    "title": "Подготовка к летнему ивенту",
+    "date": "2025-05-31",
+    "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur blandit tempus porttitor etiam porta sem malesuada magna.",
+    "lead": "Подробности подготовки серверного сообщества к ближайшему событию.",
+    "content": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean lacinia bibendum nulla sed consectetur.",
+      "Etiam porta sem malesuada magna mollis euismod. Donec id elit non mi porta gravida at eget metus.",
+      "Vestibulum id ligula porta felis euismod semper."
+    ],
+    "image": "https://placehold.co/500x400?text=MN+News"
+  },
+  {
+    "id": 4,
+    "category": "archive1",
+    "title": "Запуск первого торгового квартала",
+    "date": "2025-05-10",
+    "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed diam eget risus varius blandit sit amet non magna.",
+    "lead": "Итоги первого этапа развития торговой инфраструктуры.",
+    "content": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras mattis consectetur purus sit amet fermentum.",
+      "Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.",
+      "Donec sed odio dui. Praesent commodo cursus magna."
+    ],
+    "image": "https://placehold.co/500x400?text=MN+News"
+  },
+  {
+    "id": 5,
+    "category": "archive1",
+    "title": "Новый ивент на выходные",
+    "date": "2025-05-18",
+    "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla vitae elit libero, a pharetra augue donec ullamcorper nulla non metus.",
+    "lead": "Обзор командного соревнования и распределения наград.",
+    "content": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere consectetur est at lobortis.",
+      "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor.",
+      "Integer posuere erat a ante venenatis dapibus posuere velit aliquet."
+    ],
+    "image": "https://placehold.co/500x400?text=MN+News"
+  },
+  {
+    "id": 6,
+    "category": "archive1",
+    "title": "Обновление карты сервера",
+    "date": "2025-05-24",
+    "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor.",
+    "lead": "Что поменялось на карте и как это влияет на навигацию.",
+    "content": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean lacinia bibendum nulla sed consectetur.",
+      "Cras justo odio, dapibus ac facilisis in, egestas eget quam.",
+      "Curabitur blandit tempus porttitor."
+    ],
+    "image": "https://placehold.co/500x400?text=MN+News"
+  },
+  {
+    "id": 7,
+    "category": "archive2",
+    "title": "Старт весеннего сезона",
+    "date": "2025-04-02",
+    "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras mattis consectetur purus sit amet fermentum donec sed odio dui.",
+    "lead": "Новые активности и сезонные механики для игроков.",
+    "content": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus.",
+      "Etiam porta sem malesuada magna mollis euismod.",
+      "Morbi leo risus, porta ac consectetur ac, vestibulum at eros."
+    ],
+    "image": "https://placehold.co/500x400?text=MN+News"
+  },
+  {
+    "id": 8,
+    "category": "archive2",
+    "title": "Обновление экономики",
+    "date": "2025-04-14",
+    "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam porta sem malesuada magna mollis euismod aenean lacinia bibendum.",
+    "lead": "Разбор ключевых изменений в ценообразовании и балансе.",
+    "content": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec ullamcorper nulla non metus auctor fringilla.",
+      "Nullam id dolor id nibh ultricies vehicula ut id elit.",
+      "Praesent commodo cursus magna, vel scelerisque nisl consectetur et."
+    ],
+    "image": "https://placehold.co/500x400?text=MN+News"
+  },
+  {
+    "id": 9,
+    "category": "archive2",
+    "title": "Командный ивент гильдий",
+    "date": "2025-04-21",
+    "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent commodo cursus magna vel scelerisque nisl consectetur et.",
+    "lead": "Результаты ивента и реакция участников гильдий.",
+    "content": [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas faucibus mollis interdum.",
+      "Vestibulum id ligula porta felis euismod semper.",
+      "Cras mattis consectetur purus sit amet fermentum."
+    ],
+    "image": "https://placehold.co/500x400?text=MN+News"
+  }
+]

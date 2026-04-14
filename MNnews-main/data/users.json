@@ -1,0 +1,49 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@mnnews.local",
+    "isAdmin": true,
+    "status": "approved",
+    "profile": {
+      "rank": "Администратор",
+      "reputation": 100,
+      "clan": "MN Staff",
+      "notes": "Полный доступ к админ-панели"
+    },
+    "passwordHash": "scrypt:88912353ba6f2c949dd96f8bd6677a81:f6978425bd723c8b999f7b00109fd9277071ff3eaa77481deb9ac0f6b1d390b6993fe9763fad61ab1114b9d3aae3d5437a71698ee3ff6fea5611bd6e91cdc1be"
+  },
+  {
+    "username": "player1",
+    "email": "player1@mnnews.local",
+    "isAdmin": false,
+    "status": "approved",
+    "profile": {
+      "rank": "Игрок",
+      "reputation": 35,
+      "clan": "Wanderers",
+      "notes": "Новый участник сервера"
+    },
+    "passwordHash": "scrypt:e4749112ce0a8b585a23b1d1e19937b9:9bef7027faa33db2ededbaee14f6545967b071ed89f00ad7149e3842642f71fd928ee5e255227b91c09e39a84d629de910423ae48a4d9b0ed1b084570b4e2538"
+  },
+  {
+    "username": "ivanius46",
+    "email": "ivandomrist@gmail.com",
+    "isAdmin": false,
+    "status": "approved",
+    "profile": {
+      "rank": "Игрок",
+      "reputation": 1,
+      "clan": "Без гильдии",
+      "notes": "Профиль активирован после одобрения заявки"
+    },
+    "passwordHash": "scrypt:e17e249196a27dee003a8ee371041779:e7eb5d9f27068ff987f8c3481309eae856310bab36353ce598e0a8cb508799140a42237a41dc79b95aaffe4a13ddd46cece6cd047348ba5f232bb47c78420d49"
+  },
+  {
+    "username": "ivanius46hhhg",
+    "email": "ivandomrist@gmail.comfef",
+    "isAdmin": false,
+    "status": "pending",
+    "profile": null,
+    "passwordHash": "scrypt:4638229ff90dc04b1de13c243dda1cea:619391c162792ba77beec2f076e5b47ef4ef5ff84431d05d5c7ac0f57174d28bdfb92f330bf01f427a97f0edf867ae70c9380c932b133b63f62e927d3273ad44"
+  }
+]
