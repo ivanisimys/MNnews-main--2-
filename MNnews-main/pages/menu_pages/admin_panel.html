@@ -89,11 +89,14 @@
         async function loadNewsList() {
             try {
                 const res = await fetch(API_URL);
+                if (!res.ok) {
+                    throw new Error('Failed to fetch news');
+                }
                 currentNews = await res.json();
                 renderNewsList();
             } catch (err) {
                 console.error(err);
-                document.getElementById('newsList').innerHTML = '<p style="color: red;">Ошибка загрузки новостей.</p>';
+                document.getElementById('newsList').innerHTML = '<p style="color: red;">Ошибка загрузки новостей. Проверьте подключение к серверу.</p>';
             }
         }
 
@@ -134,7 +137,8 @@
                     modalTitle.textContent = 'Редактирование новости';
                     titleInput.value = news.title;
                     imageInput.value = news.image || '';
-                    contentInput.value = news.content;
+                    // Если content - массив, объединяем в строку с разделением абзацев
+                    contentInput.value = Array.isArray(news.content) ? news.content.join('\n\n') : news.content;
                     idInput.value = news.id;
                 }
             } else {
@@ -204,9 +208,25 @@
         }
 
         // Инициализация
-        if (checkAdminAuth()) {
-            loadNewsList();
+        async function init() {
+            const isAuth = await checkAdminAuth();
+            if (!isAuth) return;
+            
+            // Проверяем, есть ли параметр edit в URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+            
+            await loadNewsList();
+            
+            // Если есть ID для редактирования, открываем редактор
+            if (editId) {
+                setTimeout(() => {
+                    openEditor(parseInt(editId));
+                }, 300);
+            }
         }
+        
+        init();
 
         // Закрытие модалки по клику вне её
         window.onclick = function(event) {

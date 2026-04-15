@@ -1,28 +1,84 @@
-﻿'use strict';
+'use strict';
 
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs/promises');
+const fsSync = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ROOT_DIR = path.resolve(__dirname, '..');
-const NEWS_FILE = path.join(ROOT_DIR, 'data', 'news.json');
-const USERS_FILE = path.join(ROOT_DIR, 'data', 'users.json');
+const DATA_DIR = path.join(ROOT_DIR, 'data');
+const NEWS_FILE = path.join(DATA_DIR, 'news.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
+// Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Логирование запросов для отладки
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    if (req.body && Object.keys(req.body).length > 0) {
+        console.log('Body:', JSON.stringify(req.body, null, 2).substring(0, 200));
+    }
+    next();
+});
+
+// Проверка и создание директории data при необходимости
+async function ensureDataDir() {
+    try {
+        await fs.access(DATA_DIR);
+        console.log('✓ Data directory exists:', DATA_DIR);
+    } catch (error) {
+        console.log('Creating data directory:', DATA_DIR);
+        await fs.mkdir(DATA_DIR, { recursive: true });
+    }
+}
+
+// Проверка существования файлов данных
+async function ensureDataFiles() {
+    const files = [
+        { path: NEWS_FILE, default: [] },
+        { path: USERS_FILE, default: [] }
+    ];
+
+    for (const file of files) {
+        try {
+            await fs.access(file.path);
+            console.log('✓ File exists:', path.basename(file.path));
+        } catch (error) {
+            console.log('Creating file:', path.basename(file.path));
+            await fs.writeFile(file.path, JSON.stringify(file.default, null, 2), 'utf-8');
+        }
+    }
+}
 
 async function readJson(filePath) {
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const normalized = fileContent.replace(/^\uFEFF/, '');
-    return JSON.parse(normalized);
+    try {
+        const fileContent = await fs.readFile(filePath, 'utf-8');
+        const normalized = fileContent.replace(/^\uFEFF/, '');
+        return JSON.parse(normalized);
+    } catch (error) {
+        console.error(`Error reading ${filePath}:`, error.message);
+        throw new Error(`Failed to read ${path.basename(filePath)}`);
+    }
 }
 
 async function writeJson(filePath, data) {
-    await fs.writeFile(filePath, `${JSON.stringify(data, null, 2)}\n`, 'utf-8');
+    try {
+        // Создаем временный файл для атомарной записи
+        const tempFile = filePath + '.tmp';
+        await fs.writeFile(tempFile, `${JSON.stringify(data, null, 2)}\n`, 'utf-8');
+        await fs.rename(tempFile, filePath);
+        console.log('✓ Successfully wrote:', path.basename(filePath));
+    } catch (error) {
+        console.error(`Error writing ${filePath}:`, error.message);
+        throw new Error(`Failed to write ${path.basename(filePath)}`);
+    }
 }
 
 function hashPassword(password) {
@@ -58,11 +114,11 @@ function normalizeUser(raw) {
 
     let status = String(raw?.status || '').toLowerCase();
     if (!status) {
-        status = isAdmin ? 'approved' : 'approved';
+        status = isAdmin ? 'approved' : 'pending';
     }
 
     if (!['pending', 'approved', 'rejected'].includes(status)) {
-        status = 'approved';
+        status = 'pending';
     }
 
     if (isAdmin) {
@@ -135,10 +191,19 @@ function ensureAdmin(users, username) {
     return Boolean(actor && actor.isAdmin && actor.status === 'approved');
 }
 
+// Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ ok: true, date: new Date().toISOString() });
+    res.json({ 
+        ok: true, 
+        date: new Date().toISOString(),
+        platform: process.platform,
+        nodeVersion: process.version,
+        cwd: process.cwd(),
+        dataDir: DATA_DIR
+    });
 });
 
+// Get all news
 app.get('/api/news', async (req, res) => {
     try {
         const items = await readNews();
@@ -150,10 +215,12 @@ app.get('/api/news', async (req, res) => {
 
         res.json(items);
     } catch (error) {
+        console.error('Error fetching news:', error);
         res.status(500).json({ error: 'Failed to read news data.' });
     }
 });
 
+// Get single news item
 app.get('/api/news/:id', async (req, res) => {
     try {
         const id = Number.parseInt(req.params.id, 10);
@@ -166,10 +233,12 @@ app.get('/api/news/:id', async (req, res) => {
 
         res.json(item);
     } catch (error) {
+        console.error('Error fetching news item:', error);
         res.status(500).json({ error: 'Failed to read news data.' });
     }
 });
 
+// Login
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body || {};
@@ -178,19 +247,32 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(400).json({ error: 'Username and password are required.' });
         }
 
+        console.log(`Login attempt for user: ${username}`);
+        
         const users = await readUsers();
         const user = users.find((item) => item.username === username);
 
-        if (!user || !verifyPassword(password, user.passwordHash)) {
+        if (!user) {
+            console.log(`User not found: ${username}`);
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
 
+        const isValid = verifyPassword(password, user.passwordHash);
+        console.log(`Password validation for ${username}: ${isValid}`);
+
+        if (!isValid) {
+            return res.status(401).json({ error: 'Invalid credentials.' });
+        }
+
+        console.log(`Successful login: ${username}`);
         res.json(toPublicUser(user));
     } catch (error) {
+        console.error('Login error:', error);
         res.status(500).json({ error: 'Failed to login.' });
     }
 });
 
+// Register
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, password, email } = req.body || {};
@@ -198,6 +280,8 @@ app.post('/api/auth/register', async (req, res) => {
         if (!username || !password || !email) {
             return res.status(400).json({ error: 'Username, password and email are required.' });
         }
+
+        console.log(`Registration attempt: ${username} (${email})`);
 
         const users = await readUsers();
         const normalizedUsername = String(username).trim().toLowerCase();
@@ -247,12 +331,15 @@ app.post('/api/auth/register', async (req, res) => {
         users.push(nextUser);
         await persistUsers(users);
 
+        console.log(`Registration successful: ${username} (status: pending)`);
         res.status(201).json(toPublicUser(nextUser));
     } catch (error) {
+        console.error('Registration error:', error);
         res.status(500).json({ error: 'Failed to register.' });
     }
 });
 
+// Get user profile
 app.get('/api/auth/profile/:username', async (req, res) => {
     try {
         const users = await readUsers();
@@ -264,16 +351,26 @@ app.get('/api/auth/profile/:username', async (req, res) => {
 
         res.json(toPublicUser(user));
     } catch (error) {
+        console.error('Error fetching profile:', error);
         res.status(500).json({ error: 'Failed to get profile.' });
     }
 });
 
+// Get registration requests (admin only)
 app.get('/api/auth/registration-requests', async (req, res) => {
     try {
         const actor = String(req.query.actor || '');
+        
+        if (!actor) {
+            return res.status(400).json({ error: 'Actor parameter is required.' });
+        }
+
+        console.log(`Fetching registration requests for actor: ${actor}`);
+        
         const users = await readUsers();
 
         if (!ensureAdmin(users, actor)) {
+            console.log(`Unauthorized access attempt by: ${actor}`);
             return res.status(403).json({ error: 'Only admin can view registration requests.' });
         }
 
@@ -285,12 +382,15 @@ app.get('/api/auth/registration-requests', async (req, res) => {
                 status: user.status
             }));
 
+        console.log(`Found ${requests.length} pending requests`);
         res.json(requests);
     } catch (error) {
+        console.error('Error fetching registration requests:', error);
         res.status(500).json({ error: 'Failed to load registration requests.' });
     }
 });
 
+// Approve registration request
 app.post('/api/auth/registration-requests/:username/approve', async (req, res) => {
     try {
         const { actor } = req.body || {};
@@ -299,6 +399,8 @@ app.post('/api/auth/registration-requests/:username/approve', async (req, res) =
         if (!actor) {
             return res.status(400).json({ error: 'Actor is required.' });
         }
+
+        console.log(`Approving request for ${targetUsername} by ${actor}`);
 
         const users = await readUsers();
 
@@ -325,12 +427,15 @@ app.post('/api/auth/registration-requests/:username/approve', async (req, res) =
         };
 
         await persistUsers(users);
+        console.log(`Request approved for: ${targetUsername}`);
         res.json(toPublicUser(target));
     } catch (error) {
+        console.error('Error approving request:', error);
         res.status(500).json({ error: 'Failed to approve registration request.' });
     }
 });
 
+// Reject registration request
 app.post('/api/auth/registration-requests/:username/reject', async (req, res) => {
     try {
         const { actor } = req.body || {};
@@ -339,6 +444,8 @@ app.post('/api/auth/registration-requests/:username/reject', async (req, res) =>
         if (!actor) {
             return res.status(400).json({ error: 'Actor is required.' });
         }
+
+        console.log(`Rejecting request for ${targetUsername} by ${actor}`);
 
         const users = await readUsers();
 
@@ -360,12 +467,15 @@ app.post('/api/auth/registration-requests/:username/reject', async (req, res) =>
         target.profile = null;
 
         await persistUsers(users);
+        console.log(`Request rejected for: ${targetUsername}`);
         res.json(toPublicUser(target));
     } catch (error) {
+        console.error('Error rejecting request:', error);
         res.status(500).json({ error: 'Failed to reject registration request.' });
     }
 });
 
+// Create user (admin only)
 app.post('/api/auth/users', async (req, res) => {
     try {
         const { actor, username, password } = req.body || {};
@@ -402,10 +512,12 @@ app.post('/api/auth/users', async (req, res) => {
         await persistUsers(users);
         res.status(201).json({ ok: true });
     } catch (error) {
+        console.error('Error creating user:', error);
         res.status(500).json({ error: 'Failed to create user.' });
     }
 });
 
+// Update user profile (admin only)
 app.patch('/api/auth/profile/:username', async (req, res) => {
     try {
         const { actor, updates } = req.body || {};
@@ -437,13 +549,14 @@ app.patch('/api/auth/profile/:username', async (req, res) => {
         await persistUsers(users);
         res.json(toPublicUser(target));
     } catch (error) {
+        console.error('Error updating profile:', error);
         res.status(500).json({ error: 'Failed to update profile.' });
     }
 });
 
-// --- Управление новостями (Админ) ---
+// --- News Management (Admin) ---
 
-// Создание новости
+// Create news
 app.post('/api/news', async (req, res) => {
     try {
         const { title, content, image, actor } = req.body || {};
@@ -459,7 +572,6 @@ app.post('/api/news', async (req, res) => {
         const items = await readNews();
         const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
         
-        // Обрабатываем content: если это строка, разбиваем на абзацы
         let processedContent = content;
         if (typeof content === 'string') {
             processedContent = content.split(/\n\s*\n/).filter(p => p.trim().length > 0);
@@ -480,12 +592,12 @@ app.post('/api/news', async (req, res) => {
         await writeJson(NEWS_FILE, items);
         res.status(201).json(newItem);
     } catch (error) {
-        console.error(error);
+        console.error('Error creating news:', error);
         res.status(500).json({ error: 'Failed to create news.' });
     }
 });
 
-// Редактирование новости
+// Update news
 app.put('/api/news/:id', async (req, res) => {
     try {
         const id = Number.parseInt(req.params.id, 10);
@@ -503,10 +615,8 @@ app.put('/api/news/:id', async (req, res) => {
             return res.status(404).json({ error: 'News not found.' });
         }
 
-        // Обрабатываем content: если это строка, разбиваем на абзацы
         let processedContent = content;
         if (typeof content === 'string') {
-            // Разбиваем текст на абзацы по двойному переносу строки или оставляем как один абзац
             processedContent = content.split(/\n\s*\n/).filter(p => p.trim().length > 0);
         }
 
@@ -515,23 +625,22 @@ app.put('/api/news/:id', async (req, res) => {
             title: title || items[index].title,
             content: processedContent || items[index].content,
             image: image !== undefined ? image : items[index].image,
-            // Обновляем дату при редактировании
             date: new Date().toISOString()
         };
 
         await writeJson(NEWS_FILE, items);
         res.json(items[index]);
     } catch (error) {
-        console.error(error);
+        console.error('Error updating news:', error);
         res.status(500).json({ error: 'Failed to update news.' });
     }
 });
 
-// Удаление новости
+// Delete news
 app.delete('/api/news/:id', async (req, res) => {
     try {
         const id = Number.parseInt(req.params.id, 10);
-        const { actor } = req.query; // Получаем actor из query параметров для DELETE
+        const { actor } = req.query;
 
         const users = await readUsers();
         if (!ensureAdmin(users, actor)) {
@@ -549,17 +658,57 @@ app.delete('/api/news/:id', async (req, res) => {
         await writeJson(NEWS_FILE, items);
         res.json({ message: 'Deleted' });
     } catch (error) {
-        console.error(error);
+        console.error('Error deleting news:', error);
         res.status(500).json({ error: 'Failed to delete news.' });
     }
 });
 
+// Serve static files
 app.use(express.static(ROOT_DIR));
 
+// Handle SPA routing
 app.get('*', (req, res) => {
     res.sendFile(path.join(ROOT_DIR, 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`MNnews server started: http://localhost:${PORT}`);
-});
+// Start server with better error handling
+async function startServer() {
+    try {
+        console.log('='.repeat(80));
+        console.log('Starting MNnews server...');
+        console.log('='.repeat(80));
+        
+        // Ensure data directory and files exist
+        await ensureDataDir();
+        await ensureDataFiles();
+        
+        // Check file permissions
+        console.log('\nChecking file permissions...');
+        try {
+            await fs.access(DATA_DIR, fsSync.constants.R_OK | fsSync.constants.W_OK);
+            console.log('✓ Data directory is readable and writable');
+        } catch (error) {
+            console.error('✗ Data directory permission issue:', error.message);
+            console.error('Please run: chmod -R 755', DATA_DIR);
+            console.error('And: chown -R $USER:$USER', DATA_DIR);
+        }
+        
+        console.log('\nServer configuration:');
+        console.log('  Platform:', process.platform);
+        console.log('  Node version:', process.version);
+        console.log('  Port:', PORT);
+        console.log('  Root directory:', ROOT_DIR);
+        console.log('  Data directory:', DATA_DIR);
+        console.log('='.repeat(80));
+        
+        app.listen(PORT, () => {
+            console.log(`\n✓ Server is running on http://localhost:${PORT}`);
+            console.log('✓ Press Ctrl+C to stop the server\n');
+        });
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+}
+
+startServer();

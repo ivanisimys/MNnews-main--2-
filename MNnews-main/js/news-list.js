@@ -52,14 +52,38 @@ async function initNewsList() {
         const response = await fetch(url);
 
         if (!response.ok) {
-            throw new Error('Request failed');
+            throw new Error('Request failed with status ' + response.status);
         }
 
         const items = await response.json();
         renderNewsCards(container, items);
+        
+        // Удаляем старое уведомление об обновлении, если оно есть
+        const existingUpdate = container.parentElement.querySelector('.last-update');
+        if (existingUpdate) {
+            existingUpdate.remove();
+        }
+        
+        // Добавляем информацию о последнем обновлении (только одну)
+        const lastUpdate = document.createElement('p');
+        lastUpdate.className = 'last-update';
+        lastUpdate.style.cssText = 'text-align: right; color: #888; font-size: 0.85em; margin-top: 10px;';
+        lastUpdate.textContent = `Обновлено: ${new Date().toLocaleTimeString('ru-RU')}`;
+        container.parentElement.appendChild(lastUpdate);
+        
     } catch (error) {
-        container.innerHTML = '<p class="col-1-of-3__p">Не удалось загрузить новости. Проверьте, что сервер запущен.</p>';
+        console.error('Error loading news:', error);
+        container.innerHTML = '<p class="col-1-of-3__p" style="color: #e74c3c;">Не удалось загрузить новости. Убедитесь, что сервер запущен (npm start в папке server).</p>';
     }
 }
+
+// Добавляем функцию для ручного обновления
+window.refreshNews = async function() {
+    const container = document.getElementById('newsList');
+    if (container) {
+        container.innerHTML = '<p class="col-1-of-3__p">Обновление...</p>';
+        await initNewsList();
+    }
+};
 
 initNewsList();

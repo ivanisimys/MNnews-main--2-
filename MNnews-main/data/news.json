@@ -1,15 +1,25 @@
-﻿[
+[
+  {
+    "id": 10,
+    "title": "новая новость типа да",
+    "content": [
+      "уауйауай"
+    ],
+    "image": "",
+    "date": "2026-04-15T05:21:17.617Z",
+    "category": "current",
+    "preview": "уауйауай...",
+    "lead": "уауйауай"
+  },
   {
     "id": 1,
     "category": "current",
-    "title": "Новый магазин в центральном районе",
-    "date": "2025-05-29",
+    "title": "окда",
+    "date": "2026-04-15T05:21:07.543Z",
     "preview": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus posuere velit aliquet.",
     "lead": "Короткий анонс открытия нового торгового пространства на сервере.",
     "content": [
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed posuere consectetur est at lobortis.",
-      "Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla.",
-      "Curabitur blandit tempus porttitor. Praesent commodo cursus magna, vel scelerisque nisl consectetur et."
+      "типа новость"
     ],
     "image": "https://placehold.co/500x400?text=MN+News"
   },

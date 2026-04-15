@@ -1,0 +1,25 @@
+[Unit]
+Description=MNnews Server
+After=network.target
+
+[Service]
+Type=simple
+User=ivan
+WorkingDirectory=/home/ivan/mnnews/MNnews-main/server
+ExecStart=/usr/bin/node /home/ivan/mnnews/MNnews-main/server/index.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mnnews
+
+# Environment variables
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

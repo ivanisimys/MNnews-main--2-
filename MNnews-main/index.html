@@ -33,6 +33,16 @@
                     <p class="col-1-of-3__p">Загрузка новостей...</p>
                 </div>
             </div>
+            
+            <!-- Кнопка обновления для администраторов -->
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="if(window.refreshNews) window.refreshNews();" 
+                        style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background 0.2s;"
+                        onmouseover="this.style.background='#2980b9'" 
+                        onmouseout="this.style.background='#3498db'">
+                    🔄 Обновить список новостей
+                </button>
+            </div>
         </main>
 
         <footer>
