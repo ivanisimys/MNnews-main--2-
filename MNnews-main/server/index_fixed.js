@@ -517,6 +517,72 @@ app.post('/api/auth/users', async (req, res) => {
     }
 });
 
+app.get('/api/auth/users', async (req, res) => {
+    try {
+        const actor = String(req.query.actor || '').trim();
+        const users = await readUsers();
+
+        if (!ensureAdmin(users, actor)) {
+            return res.status(403).json({ error: 'Only admin can view users.' });
+        }
+
+        const result = users
+            .map((user) => ({
+                username: user.username,
+                email: user.email,
+                isAdmin: Boolean(user.isAdmin),
+                status: user.status
+            }))
+            .sort((a, b) => a.username.localeCompare(b.username, 'ru'));
+
+        res.json(result);
+    } catch (error) {
+        console.error('Error loading users list:', error);
+        res.status(500).json({ error: 'Failed to load users list.' });
+    }
+});
+
+app.delete('/api/auth/users/:username', async (req, res) => {
+    try {
+        const actor = String(req.query.actor || '').trim();
+        const targetUsername = String(req.params.username || '').trim();
+
+        if (!actor || !targetUsername) {
+            return res.status(400).json({ error: 'Actor and target username are required.' });
+        }
+
+        const users = await readUsers();
+
+        if (!ensureAdmin(users, actor)) {
+            return res.status(403).json({ error: 'Only admin can delete users.' });
+        }
+
+        if (actor === targetUsername) {
+            return res.status(400).json({ error: 'You cannot delete your own account.' });
+        }
+
+        const target = users.find((user) => user.username === targetUsername);
+        if (!target) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        if (target.isAdmin) {
+            const approvedAdminsCount = users.filter((user) => user.isAdmin && user.status === 'approved').length;
+            if (approvedAdminsCount <= 1) {
+                return res.status(400).json({ error: 'Cannot delete the last administrator.' });
+            }
+        }
+
+        const filteredUsers = users.filter((user) => user.username !== targetUsername);
+        await persistUsers(filteredUsers);
+
+        res.json({ ok: true });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ error: 'Failed to delete user.' });
+    }
+});
+
 // Update user profile (admin only)
 app.patch('/api/auth/profile/:username', async (req, res) => {
     try {

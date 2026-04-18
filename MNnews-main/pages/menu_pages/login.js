@@ -70,6 +70,7 @@ function applyProfile(user) {
     const playerCard = document.querySelector('.player-card');
     const adminPanel = document.querySelector('#admin_panel');
     const adminPanelCreate = document.querySelector('#admin_panel2');
+    const adminUsersPanel = document.querySelector('#admin_users_panel');
     const requestsLink = document.querySelector('#requestsLink');
 
     if (authColumns) {
@@ -114,6 +115,10 @@ function applyProfile(user) {
         adminPanelCreate.style.display = canUseAdminTools ? 'block' : 'none';
     }
 
+    if (adminUsersPanel) {
+        adminUsersPanel.style.display = canUseAdminTools ? 'block' : 'none';
+    }
+
     if (requestsLink) {
         requestsLink.style.display = canUseAdminTools ? 'inline-block' : 'none';
     }
@@ -121,6 +126,115 @@ function applyProfile(user) {
     const adminPanelLink = document.querySelector('#adminPanelLink');
     if (adminPanelLink) {
         adminPanelLink.style.display = canUseAdminTools ? 'inline-block' : 'none';
+    }
+
+    if (canUseAdminTools) {
+        loadAdminUsersList();
+    }
+}
+
+function getStatusBadgeClass(status) {
+    if (status === 'approved') {
+        return 'status-approved';
+    }
+    if (status === 'pending') {
+        return 'status-pending';
+    }
+    if (status === 'rejected') {
+        return 'status-rejected';
+    }
+    return 'status-pending';
+}
+
+function renderAdminUsersList(users) {
+    const root = document.getElementById('admin-users-list');
+    const actor = localStorage.getItem('name');
+
+    if (!root) {
+        return;
+    }
+
+    if (!Array.isArray(users) || users.length === 0) {
+        root.innerHTML = '<p class="admin-users-empty">Аккаунтов пока нет.</p>';
+        return;
+    }
+
+    root.innerHTML = users.map((user) => {
+        const roleBadge = user.isAdmin
+            ? '<span class="admin-user-badge role-admin">Админ</span>'
+            : '<span class="admin-user-badge role-user">Пользователь</span>';
+        const statusBadge = `<span class="admin-user-badge ${getStatusBadgeClass(user.status)}">${user.status}</span>`;
+        const canDelete = actor && actor !== user.username;
+
+        return `
+            <article class="admin-user-row">
+                <div>
+                    <strong>${user.username}</strong>
+                    <div class="admin-user-meta">${user.email || 'email не указан'}</div>
+                </div>
+                <div class="admin-user-badges">
+                    ${roleBadge}
+                    ${statusBadge}
+                </div>
+                <button
+                    type="button"
+                    class="admin-user-delete-btn"
+                    data-username="${user.username}"
+                    ${canDelete ? '' : 'disabled'}
+                >
+                    Удалить
+                </button>
+            </article>
+        `;
+    }).join('');
+
+    for (const button of root.querySelectorAll('.admin-user-delete-btn')) {
+        if (button.disabled) {
+            continue;
+        }
+
+        button.addEventListener('click', async function () {
+            const targetUsername = String(button.getAttribute('data-username') || '').trim();
+            const actor = localStorage.getItem('name');
+
+            if (!targetUsername || !actor) {
+                return;
+            }
+
+            const confirmed = window.confirm(`Удалить аккаунт "${targetUsername}"? Это действие нельзя отменить.`);
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                await requestJson(`/api/auth/users/${encodeURIComponent(targetUsername)}?actor=${encodeURIComponent(actor)}`, {
+                    method: 'DELETE'
+                });
+                showLoginError(`Аккаунт "${targetUsername}" удалён.`);
+                await loadAdminUsersList();
+            } catch (error) {
+                showLoginError(error.message || 'Не удалось удалить аккаунт.');
+            }
+        });
+    }
+}
+
+async function loadAdminUsersList() {
+    const root = document.getElementById('admin-users-list');
+    const actor = localStorage.getItem('name');
+    const isAdmin = localStorage.getItem('is_admin') === '1';
+
+    if (!root || !actor || !isAdmin) {
+        return;
+    }
+
+    root.innerHTML = '<p class="admin-users-empty">Загрузка аккаунтов...</p>';
+
+    try {
+        const users = await requestJson(`/api/auth/users?actor=${encodeURIComponent(actor)}`);
+        renderAdminUsersList(users);
+    } catch (error) {
+        root.innerHTML = `<p class="admin-users-empty">${error.message || 'Не удалось загрузить список аккаунтов.'}</p>`;
     }
 }
 
@@ -309,6 +423,7 @@ function setupAdminPanels() {
                     showLoginError('Профиль успешно обновлён.');
                 }
                 adminPanel.reset();
+                await loadAdminUsersList();
             } catch (error) {
                 showLoginError(error.message || 'Не удалось обновить профиль.');
             }
@@ -338,11 +453,23 @@ function setupAdminPanels() {
 
                 showLoginError('Аккаунт успешно создан.');
                 adminPanelCreate.reset();
+                await loadAdminUsersList();
             } catch (error) {
                 showLoginError(error.message || 'Не удалось создать аккаунт.');
             }
         });
     }
+}
+
+function setupUsersAdminPanel() {
+    const refreshButton = document.getElementById('refresh-users-btn');
+    if (!refreshButton) {
+        return;
+    }
+
+    refreshButton.addEventListener('click', async function () {
+        await loadAdminUsersList();
+    });
 }
 
 function setupAuthSwitch() {
@@ -367,4 +494,5 @@ setupExitButton();
 setupLoginForm();
 setupRegisterForm();
 setupAdminPanels();
+setupUsersAdminPanel();
 loadCurrentProfile();
