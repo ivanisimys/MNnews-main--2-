@@ -172,6 +172,7 @@
 
     <div class="admin-container">
         <button onclick="openEditor()" class="btn-create-new">+ Создать новую новость</button>
+        <button onclick="openCategoryManager()" class="btn-create-new" style="background: linear-gradient(120deg, #9b59b6, #8e44ad); margin-left: 10px;">📁 Управление категориями</button>
         
         <div id="newsList">
             <p style="color: #aaa; text-align: center;">Загрузка новостей...</p>
@@ -211,9 +212,34 @@
         </div>
     </div>
 
+    <!-- Модальное окно управления категориями -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeCategoryManager()">&times;</span>
+            <h3>Управление категориями</h3>
+            <p class="editor-meta">Здесь вы можете создавать и удалять категории новостей.</p>
+            
+            <div class="field-group">
+                <label for="newCategoryName">Название новой категории</label>
+                <input class="editor-input" type="text" id="newCategoryName" placeholder="Например: Важные события">
+            </div>
+            <div class="field-group">
+                <label for="newCategoryDesc">Описание (необязательно)</label>
+                <input class="editor-input" type="text" id="newCategoryDesc" placeholder="Краткое описание категории">
+            </div>
+            <button onclick="createCategory()" class="btn-save" style="margin-bottom: 20px;">+ Создать категорию</button>
+            
+            <div id="categoriesList" style="margin-top: 20px;">
+                <p style="color: #aaa;">Загрузка категорий...</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = '/api/news';
+        const CATEGORIES_API_URL = '/api/categories';
         let currentNews = [];
+        let currentCategories = [];
         const CATEGORY_LABELS = {
             current: 'Главная',
             archive1: 'Архив 1',
@@ -370,6 +396,7 @@
             const editId = urlParams.get('edit');
             
             await loadNewsList();
+            await loadCategories(); // Загружаем категории при инициализации
             
             // Если есть ID для редактирования, открываем редактор
             if (editId) {
@@ -384,8 +411,153 @@
         // Закрытие модалки по клику вне её
         window.onclick = function(event) {
             const modal = document.getElementById('editorModal');
+            const categoryModal = document.getElementById('categoryModal');
             if (event.target == modal) {
                 closeEditor();
+            }
+            if (event.target == categoryModal) {
+                closeCategoryManager();
+            }
+        }
+
+        // --- Функции управления категориями ---
+        
+        // Открытие менеджера категорий
+        async function openCategoryManager() {
+            const modal = document.getElementById('categoryModal');
+            modal.style.display = 'block';
+            await loadCategories();
+        }
+
+        // Закрытие менеджера категорий
+        function closeCategoryManager() {
+            document.getElementById('categoryModal').style.display = 'none';
+        }
+
+        // Загрузка списка категорий
+        async function loadCategories() {
+            try {
+                const res = await fetch(CATEGORIES_API_URL);
+                if (!res.ok) {
+                    throw new Error('Failed to fetch categories');
+                }
+                currentCategories = await res.json();
+                renderCategoriesList();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('categoriesList').innerHTML = '<p style="color: red;">Ошибка загрузки категорий.</p>';
+            }
+        }
+
+        // Отрисовка списка категорий
+        function renderCategoriesList() {
+            const container = document.getElementById('categoriesList');
+            if (currentCategories.length === 0) {
+                container.innerHTML = '<p style="color: #aaa; text-align: center;">Категорий пока нет.</p>';
+                return;
+            }
+
+            container.innerHTML = currentCategories.map(cat => `
+                <div class="news-item" style="margin-bottom: 10px;">
+                    <div class="news-info">
+                        <h4>${cat.name}</h4>
+                        <p>ID: ${cat.id} | ${cat.description || 'Нет описания'}</p>
+                    </div>
+                    <div class="news-actions">
+                        ${cat.id !== 'current' ? `<button class="btn-delete" onclick="deleteCategory('${cat.id}')">Удалить</button>` : '<span style="color: #888; font-size: 0.9em;">Системная</span>'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Создание новой категории
+        async function createCategory() {
+            const name = document.getElementById('newCategoryName').value.trim();
+            const description = document.getElementById('newCategoryDesc').value.trim();
+            const actor = localStorage.getItem('name');
+
+            if (!name) {
+                alert('Название категории обязательно!');
+                return;
+            }
+
+            try {
+                const res = await fetch(CATEGORIES_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description, actor })
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    alert('Ошибка: ' + (error.error || 'Не удалось создать категорию'));
+                    return;
+                }
+
+                // Очищаем поля
+                document.getElementById('newCategoryName').value = '';
+                document.getElementById('newCategoryDesc').value = '';
+
+                // Перезагружаем список категорий и обновляем селект в редакторе новостей
+                await loadCategories();
+                updateCategorySelect();
+                
+                alert('Категория успешно создана!');
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка при создании категории!');
+            }
+        }
+
+        // Удаление категории
+        async function deleteCategory(categoryId) {
+            const actor = localStorage.getItem('name');
+            if (!confirm('Вы уверены, что хотите удалить эту категорию? Все новости из этой категории будут перемещены в архив.')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${CATEGORIES_API_URL}/${categoryId}?actor=${encodeURIComponent(actor)}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    alert('Ошибка: ' + (error.error || 'Не удалось удалить категорию'));
+                    return;
+                }
+
+                await loadCategories();
+                updateCategorySelect();
+                alert('Категория успешно удалена!');
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка при удалении категории!');
+            }
+        }
+
+        // Обновление выпадающего списка категорий в редакторе новостей
+        function updateCategorySelect() {
+            const select = document.getElementById('editCategory');
+            if (!select) return;
+
+            // Сохраняем текущее выбранное значение
+            const currentValue = select.value;
+
+            // Очищаем список
+            select.innerHTML = '';
+
+            // Добавляем все категории
+            for (const cat of currentCategories) {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = cat.name;
+                select.appendChild(option);
+            }
+
+            // Восстанавливаем выбранное значение, если оно еще существует
+            if (currentValue && currentCategories.find(c => c.id === currentValue)) {
+                select.value = currentValue;
             }
         }
     </script>

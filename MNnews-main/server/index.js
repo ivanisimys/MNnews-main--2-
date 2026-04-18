@@ -13,6 +13,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT_DIR, 'data');
 const NEWS_FILE = path.join(DATA_DIR, 'news.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
 
 app.use(cors());
 app.use(express.json());
@@ -24,7 +25,12 @@ async function ensureDataDir() {
 async function ensureDataFiles() {
     const files = [
         { filePath: NEWS_FILE, fallback: [] },
-        { filePath: USERS_FILE, fallback: [] }
+        { filePath: USERS_FILE, fallback: [] },
+        { filePath: CATEGORIES_FILE, fallback: [
+            { id: 'current', name: 'Главная страница', description: 'Актуальные новости' },
+            { id: 'archive1', name: 'Архив новостей 1', description: 'Архив новостей первого раздела' },
+            { id: 'archive2', name: 'Архив новостей 2', description: 'Архив новостей второго раздела' }
+        ]}
     ];
 
     for (const file of files) {
@@ -134,6 +140,59 @@ async function readUsers() {
     }
 
     return normalizedUsers;
+}
+
+async function readCategories() {
+    return readJson(CATEGORIES_FILE);
+}
+
+async function writeCategories(categories) {
+    await writeJson(CATEGORIES_FILE, categories);
+}
+
+// Автоматическое архивирование старых новостей
+async function autoArchiveOldNews() {
+    try {
+        const items = await readNews();
+        const categories = await readCategories();
+        
+        // Получаем все категории кроме 'current'
+        const archiveCategories = categories.filter(c => c.id !== 'current').map(c => c.id);
+        
+        if (archiveCategories.length === 0) {
+            return; // Нет архивных категорий
+        }
+        
+        // Сортируем новости по дате (от новых к старым)
+        const sortedItems = items.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Оставляем только 6 самых новых новостей на главной (current)
+        const maxCurrentNews = 6;
+        let hasChanges = false;
+        
+        const currentNews = sortedItems.filter(item => item.category === 'current');
+        const otherNews = sortedItems.filter(item => item.category !== 'current');
+        
+        if (currentNews.length > maxCurrentNews) {
+            // Перемещаем старые новости в первый доступный архив
+            const targetArchive = archiveCategories[0];
+            const newsToArchive = currentNews.slice(maxCurrentNews);
+            
+            for (const news of newsToArchive) {
+                news.category = targetArchive;
+                hasChanges = true;
+            }
+            
+            if (hasChanges) {
+                // Объединяем и сортируем по ID для сохранения порядка
+                const updatedItems = [...currentNews.slice(0, maxCurrentNews), ...newsToArchive, ...otherNews];
+                await writeJson(NEWS_FILE, updatedItems);
+                console.log(`Автоматически архивировано ${newsToArchive.length} новостей в ${targetArchive}`);
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка при автоматическом архивировании:', error);
+    }
 }
 
 async function persistUsers(users) {
@@ -610,6 +669,10 @@ app.post('/api/news', async (req, res) => {
 
         items.unshift(newItem);
         await writeJson(NEWS_FILE, items);
+        
+        // Проверяем是否需要自动归档
+        await autoArchiveOldNews();
+        
         res.status(201).json(newItem);
     } catch (error) {
         console.error(error);
@@ -682,10 +745,115 @@ app.delete('/api/news/:id', async (req, res) => {
         }
 
         await writeJson(NEWS_FILE, items);
+        
+        // После удаления проверяем是否需要自动归档
+        await autoArchiveOldNews();
+        
         res.json({ message: 'Deleted' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to delete news.' });
+    }
+});
+
+// --- Управление категориями ---
+
+// Получение списка категорий
+app.get('/api/categories', async (req, res) => {
+    try {
+        const categories = await readCategories();
+        res.json(categories);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to read categories.' });
+    }
+});
+
+// Создание новой категории
+app.post('/api/categories', async (req, res) => {
+    try {
+        const { name, description, actor } = req.body || {};
+        
+        if (!name) {
+            return res.status(400).json({ error: 'Category name is required.' });
+        }
+        
+        const users = await readUsers();
+        if (!ensureAdmin(users, actor)) {
+            return res.status(403).json({ error: 'Only admin can create categories.' });
+        }
+        
+        const categories = await readCategories();
+        
+        // Генерируем ID из названия
+        const id = name.toLowerCase().replace(/[^a-z0-9а-я]/g, '_').replace(/_+/g, '_');
+        
+        // Проверяем, не существует ли уже такая категория
+        if (categories.find(c => c.id === id)) {
+            return res.status(409).json({ error: 'Category already exists.' });
+        }
+        
+        categories.push({
+            id,
+            name,
+            description: description || ''
+        });
+        
+        await writeCategories(categories);
+        res.status(201).json({ id, name, description: description || '' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create category.' });
+    }
+});
+
+// Удаление категории
+app.delete('/api/categories/:id', async (req, res) => {
+    try {
+        const categoryId = req.params.id;
+        const { actor } = req.query;
+        
+        if (!actor) {
+            return res.status(400).json({ error: 'Actor is required.' });
+        }
+        
+        const users = await readUsers();
+        if (!ensureAdmin(users, actor)) {
+            return res.status(403).json({ error: 'Only admin can delete categories.' });
+        }
+        
+        // Нельзя удалить системные категории
+        if (categoryId === 'current') {
+            return res.status(400).json({ error: 'Cannot delete system category "current".' });
+        }
+        
+        const categories = await readCategories();
+        const categoryIndex = categories.findIndex(c => c.id === categoryId);
+        
+        if (categoryIndex === -1) {
+            return res.status(404).json({ error: 'Category not found.' });
+        }
+        
+        // Перемещаем новости из удаляемой категории в archive1 или current
+        const items = await readNews();
+        const targetCategory = categories.find(c => c.id === 'archive1') ? 'archive1' : 'current';
+        
+        for (const item of items) {
+            if (item.category === categoryId) {
+                item.category = targetCategory;
+            }
+        }
+        
+        await writeJson(NEWS_FILE, items);
+        
+        // Удаляем категорию
+        categories.splice(categoryIndex, 1);
+        await writeCategories(categories);
+        
+        res.json({ message: 'Category deleted', movedTo: targetCategory });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete category.' });
     }
 });
 

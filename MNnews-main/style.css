@@ -59,6 +59,7 @@ header {
     padding: 20px 0;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 18px;
 }
 
@@ -167,6 +168,23 @@ header {
 .news-card-link:hover .col-1-of-3 {
     transform: translateY(-2px);
     box-shadow: 0 12px 26px var(--shadow);
+}
+
+/* Стили для архивных страниц - 3 новости в ряд */
+.archive-grid .news-card-link {
+    max-width: calc(33.333% - 10px);
+}
+
+@media (max-width: 1024px) {
+    .archive-grid .news-card-link {
+        max-width: calc(50% - 7px);
+    }
+}
+
+@media (max-width: 700px) {
+    .archive-grid .news-card-link {
+        max-width: 100%;
+    }
 }
 
 .col-1-of-3 {
@@ -310,26 +328,21 @@ footer {
 }
 
 @media (max-width: 700px) {
-    .slider {
-        font-size: 28px;
-    }
+.slider {
+font-size: 28px;
+}
 
-    .menu {
-        width: 100%;
-    }
+.menu {
+width: 100%;
+}
 
-    .menu__item a,
-    .theme-toggle {
-        width: 100%;
-        text-align: center;
-    }
+.menu__item a,
+.theme-toggle {
+width: 100%;
+text-align: center;
+}
 
-    .col-1-of-3,
-    .news-card-link {
-        max-width: 100%;
-    }
-
-    .news-detail__title {
-        font-size: 26px;
-    }
+.news-detail__title {
+    font-size: 26px;
+}
 }
