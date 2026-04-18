@@ -19,15 +19,18 @@ async function loadDynamicMenu() {
         let menuHTML = '';
         
         for (const cat of categories) {
-            let link = '../index.html';
+            let link;
             
             if (cat.id === 'current') {
                 link = '../index.html';
             } else {
-                link = `news_${cat.id}.html`;
+                // Используем универсальную страницу категории
+                link = `category.html?id=${cat.id}`;
             }
             
-            const isActive = currentPage.includes(cat.id) || (cat.id === 'current' && (currentPage.endsWith('index.html') || currentPage.endsWith('/')));
+            const currentPage = window.location.pathname;
+            const isActive = currentPage.includes(`id=${cat.id}`) || 
+                           (cat.id === 'current' && (currentPage.endsWith('index.html') || currentPage.endsWith('/')));
             const activeClass = isActive ? ' style="background: color-mix(in srgb, var(--accent) 30%, var(--card));"' : '';
             
             menuHTML += `<li class="sub-menu__item"${activeClass}><a href="${link}">${cat.name}</a></li>`;

@@ -248,6 +248,21 @@ header {
     font-size: 18px;
 }
 
+.news-detail__date {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.news-detail__content {
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+.news-detail__content p {
+    margin: 0 0 12px;
+}
+
 .news-detail__pic {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -345,4 +360,45 @@ text-align: center;
 .news-detail__title {
     font-size: 26px;
 }
+}
+
+/* Стили для страницы категории */
+.category-page .page-title {
+    margin: 0 0 8px;
+    font-size: 32px;
+    color: var(--accent);
+}
+
+.category-page .page-description {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 16px;
+}
+
+.category-page .news-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+@media (max-width: 1024px) {
+    .category-page .news-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .category-page .news-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.category-page .no-news {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 18px;
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px var(--shadow);
 }

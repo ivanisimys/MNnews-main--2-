@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Категория - MNnews</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="../index.html" class="logo">MN<span>news</span></a>
+            <nav class="main-menu">
+                <ul class="main-menu__list">
+                    <li class="main-menu__item"><a href="../index.html">Главная</a></li>
+                    <li class="main-menu__item has-submenu">
+                        <a href="#">Разделы</a>
+                        <ul class="sub-menu">
+                            <!-- Динамически загружается из categories.json -->
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main category-page">
+        <div class="container">
+            <h1 id="category-title" class="page-title">Загрузка...</h1>
+            <p id="category-description" class="page-description"></p>
+            
+            <div id="news-container" class="news-grid">
+                <!-- Новости загружаются динамически -->
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 MNnews. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="../js/dynamic-menu.js"></script>
+    <script src="../js/category.js"></script>
+</body>
+</html>
