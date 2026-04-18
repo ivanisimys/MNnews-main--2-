@@ -194,6 +194,14 @@
                 <input class="editor-input" type="text" id="editImage" placeholder="https://example.com/image.jpg">
                 <p class="field-hint">Оставьте поле пустым, если картинка не нужна.</p>
             </div>
+                        <div class="field-group">
+                <label for="editCategory">Страница публикации</label>
+                <select class="editor-input" id="editCategory">
+                    <option value="current">Главная страница</option>
+                    <option value="archive1">Архив новостей 1</option>
+                    <option value="archive2">Архив новостей 2</option>
+                </select>
+            </div>
             <div class="field-group">
                 <label for="editContent">Текст новости</label>
                 <textarea class="editor-textarea" id="editContent" placeholder="Введите текст новости..."></textarea>
@@ -206,6 +214,11 @@
     <script>
         const API_URL = '/api/news';
         let currentNews = [];
+        const CATEGORY_LABELS = {
+            current: 'Главная',
+            archive1: 'Архив 1',
+            archive2: 'Архив 2'
+        };
 
         // Проверка авторизации админа
         async function checkAdminAuth() {
@@ -247,7 +260,7 @@
                 <div class="news-item">
                     <div class="news-info">
                         <h4>${news.title}</h4>
-                        <p>${new Date(news.date).toLocaleDateString()} | ID: ${news.id}</p>
+                        <p>${new Date(news.date).toLocaleDateString()} | ID: ${news.id} | ${CATEGORY_LABELS[news.category] || news.category || 'Главная'}</p>
                     </div>
                     <div class="news-actions">
                         <button class="btn-edit" onclick="openEditor(${news.id})">Изменить</button>
@@ -262,6 +275,7 @@
             const modal = document.getElementById('editorModal');
             const titleInput = document.getElementById('editTitle');
             const imageInput = document.getElementById('editImage');
+            const categoryInput = document.getElementById('editCategory');
             const contentInput = document.getElementById('editContent');
             const idInput = document.getElementById('editId');
             const modalTitle = document.getElementById('modalTitle');
@@ -272,6 +286,7 @@
                     modalTitle.textContent = 'Редактирование новости';
                     titleInput.value = news.title;
                     imageInput.value = news.image || '';
+                    categoryInput.value = news.category || 'current';
                     // Если content - массив, объединяем в строку с разделением абзацев
                     contentInput.value = Array.isArray(news.content) ? news.content.join('\n\n') : news.content;
                     idInput.value = news.id;
@@ -280,6 +295,7 @@
                 modalTitle.textContent = 'Новая новость';
                 titleInput.value = '';
                 imageInput.value = '';
+                categoryInput.value = 'current';
                 contentInput.value = '';
                 idInput.value = '';
             }
@@ -297,6 +313,7 @@
             const id = document.getElementById('editId').value;
             const title = document.getElementById('editTitle').value.trim();
             const image = document.getElementById('editImage').value.trim();
+            const category = document.getElementById('editCategory').value;
             const content = document.getElementById('editContent').value.trim();
             const username = localStorage.getItem('name');
 
@@ -311,14 +328,14 @@
                     await fetch(`${API_URL}/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title, content, image, actor: username })
+                        body: JSON.stringify({ title, content, image, category, actor: username })
                     });
                 } else {
                     // Создание новой
                     await fetch(API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title, content, image, actor: username })
+                        body: JSON.stringify({ title, content, image, category, actor: username })
                     });
                 }
                 closeEditor();

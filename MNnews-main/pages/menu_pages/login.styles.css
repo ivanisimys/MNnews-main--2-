@@ -411,11 +411,61 @@ h2 {
     background: linear-gradient(120deg, #b8495b, #8b3142);
 }
 
+.admin-user-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.admin-user-edit-btn {
+    width: auto;
+    min-width: 100px;
+    padding: 10px 12px;
+    background: linear-gradient(120deg, #396fa0, #2a5a85);
+}
+
 .admin-user-delete-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
     filter: none;
+}
+
+.toast-root {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 1100;
+    display: grid;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast-notification {
+    min-width: 240px;
+    max-width: 360px;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+    font-weight: 600;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-notification.toast-success {
+    background: linear-gradient(120deg, #1e9a72, #147c5a);
+}
+
+.toast-notification.toast-error {
+    background: linear-gradient(120deg, #b8495b, #8b3142);
+}
+
+.toast-notification.is-hiding {
+    opacity: 0;
+    transform: translateY(-6px);
 }
 
 .btn-logout {
@@ -497,6 +547,20 @@ h2 {
     }
 
     .admin-user-delete-btn {
+        width: 100%;
+    }
+
+    .admin-user-edit-btn {
+        width: 100%;
+    }
+
+    .toast-root {
+        right: 10px;
+        left: 10px;
+    }
+
+    .toast-notification {
+        max-width: none;
         width: 100%;
     }
 }

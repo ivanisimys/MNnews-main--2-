@@ -575,7 +575,7 @@ app.patch('/api/auth/profile/:username', async (req, res) => {
 // Создание новости
 app.post('/api/news', async (req, res) => {
     try {
-        const { title, content, image, actor } = req.body || {};
+        const { title, content, image, actor, category } = req.body || {};
         if (!title || !content) {
             return res.status(400).json({ error: 'Title and content are required.' });
         }
@@ -594,13 +594,16 @@ app.post('/api/news', async (req, res) => {
             processedContent = content.split(/\n\s*\n/).filter(p => p.trim().length > 0);
         }
         
+        const allowedCategories = new Set(['current', 'archive1', 'archive2']);
+        const normalizedCategory = allowedCategories.has(category) ? category : 'current';
+
         const newItem = {
             id: newId,
             title,
             content: processedContent,
             image: image || '',
             date: new Date().toISOString(),
-            category: 'current',
+            category: normalizedCategory,
             preview: typeof content === 'string' ? content.substring(0, 150) + '...' : (Array.isArray(content) ? content[0] : ''),
             lead: typeof content === 'string' ? content.substring(0, 200) : (Array.isArray(content) ? content[0] : '')
         };
@@ -618,7 +621,7 @@ app.post('/api/news', async (req, res) => {
 app.put('/api/news/:id', async (req, res) => {
     try {
         const id = Number.parseInt(req.params.id, 10);
-        const { title, content, image, actor } = req.body || {};
+        const { title, content, image, actor, category } = req.body || {};
 
         const users = await readUsers();
         if (!ensureAdmin(users, actor)) {
@@ -639,11 +642,14 @@ app.put('/api/news/:id', async (req, res) => {
             processedContent = content.split(/\n\s*\n/).filter(p => p.trim().length > 0);
         }
 
+        const allowedCategories = new Set(['current', 'archive1', 'archive2']);
+
         items[index] = {
             ...items[index],
             title: title || items[index].title,
             content: processedContent || items[index].content,
             image: image !== undefined ? image : items[index].image,
+            category: allowedCategories.has(category) ? category : items[index].category,
             // Обновляем дату при редактировании
             date: new Date().toISOString()
         };

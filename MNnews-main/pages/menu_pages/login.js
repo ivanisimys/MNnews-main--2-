@@ -19,6 +19,25 @@ function showLoginError(message) {
     };
 }
 
+function showToast(message, type = 'success') {
+    const root = document.getElementById('toastRoot');
+    if (!root) {
+        return;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type === 'error' ? 'error' : 'success'}`;
+    toast.textContent = message;
+    root.appendChild(toast);
+
+    window.setTimeout(function () {
+        toast.classList.add('is-hiding');
+        window.setTimeout(function () {
+            toast.remove();
+        }, 220);
+    }, 3200);
+}
+
 function setAuthMode(mode) {
     const loginBlock = document.getElementById('loginFormBlock');
     const registerBlock = document.getElementById('registerFormBlock');
@@ -176,17 +195,37 @@ function renderAdminUsersList(users) {
                     ${roleBadge}
                     ${statusBadge}
                 </div>
-                <button
-                    type="button"
-                    class="admin-user-delete-btn"
-                    data-username="${user.username}"
-                    ${canDelete ? '' : 'disabled'}
-                >
-                    Удалить
-                </button>
+                <div class="admin-user-actions">
+                    <button
+                        type="button"
+                        class="admin-user-edit-btn"
+                        data-username="${user.username}"
+                    >
+                        Изменить
+                    </button>
+                    <button
+                        type="button"
+                        class="admin-user-delete-btn"
+                        data-username="${user.username}"
+                        ${canDelete ? '' : 'disabled'}
+                    >
+                        Удалить
+                    </button>
+                </div>
             </article>
         `;
     }).join('');
+
+    for (const button of root.querySelectorAll('.admin-user-edit-btn')) {
+        button.addEventListener('click', async function () {
+            const targetUsername = String(button.getAttribute('data-username') || '').trim();
+            if (!targetUsername) {
+                return;
+            }
+
+            await openUserProfileForEdit(targetUsername);
+        });
+    }
 
     for (const button of root.querySelectorAll('.admin-user-delete-btn')) {
         if (button.disabled) {
@@ -210,12 +249,55 @@ function renderAdminUsersList(users) {
                 await requestJson(`/api/auth/users/${encodeURIComponent(targetUsername)}?actor=${encodeURIComponent(actor)}`, {
                     method: 'DELETE'
                 });
-                showLoginError(`Аккаунт "${targetUsername}" удалён.`);
+                showToast(`Аккаунт "${targetUsername}" удалён.`, 'success');
                 await loadAdminUsersList();
             } catch (error) {
                 showLoginError(error.message || 'Не удалось удалить аккаунт.');
             }
         });
+    }
+}
+
+async function openUserProfileForEdit(username) {
+    const adminPanel = document.querySelector('#admin_panel');
+    if (!adminPanel) {
+        return;
+    }
+
+    try {
+        const user = await requestJson(`/api/auth/profile/${encodeURIComponent(username)}`);
+        const profile = user.profile || {};
+
+        const nameInput = document.getElementById('player-name');
+        const rankInput = document.getElementById('position');
+        const reputationInput = document.getElementById('reputation');
+        const clanInput = document.getElementById('guild');
+        const notesInput = document.getElementById('admin-notes');
+        const roleSelect = document.getElementById('admin-role-action');
+
+        if (nameInput) {
+            nameInput.value = user.username || username;
+        }
+        if (rankInput) {
+            rankInput.value = profile.rank || '';
+        }
+        if (reputationInput) {
+            reputationInput.value = Number.isFinite(Number(profile.reputation)) ? String(profile.reputation) : '';
+        }
+        if (clanInput) {
+            clanInput.value = profile.clan || '';
+        }
+        if (notesInput) {
+            notesInput.value = profile.notes || '';
+        }
+        if (roleSelect) {
+            roleSelect.value = '';
+        }
+
+        adminPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showToast(`Профиль "${username}" загружен в форму редактирования.`, 'success');
+    } catch (error) {
+        showLoginError(error.message || 'Не удалось загрузить профиль пользователя.');
     }
 }
 
@@ -416,11 +498,11 @@ function setupAdminPanels() {
                 });
 
                 if (adminRoleAction === 'grant') {
-                    showLoginError('Профиль обновлён. Права администратора выданы.');
+                    showToast('Профиль обновлён. Права администратора выданы.', 'success');
                 } else if (adminRoleAction === 'revoke') {
-                    showLoginError('Профиль обновлён. Права администратора сняты.');
+                    showToast('Профиль обновлён. Права администратора сняты.', 'success');
                 } else {
-                    showLoginError('Профиль успешно обновлён.');
+                    showToast('Профиль успешно обновлён.', 'success');
                 }
                 adminPanel.reset();
                 await loadAdminUsersList();
@@ -451,7 +533,7 @@ function setupAdminPanels() {
                     body: JSON.stringify({ actor, username, password })
                 });
 
-                showLoginError('Аккаунт успешно создан.');
+                showToast('Аккаунт успешно создан.', 'success');
                 adminPanelCreate.reset();
                 await loadAdminUsersList();
             } catch (error) {
