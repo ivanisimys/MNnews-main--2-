@@ -10,7 +10,7 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ROOT_DIR = path.resolve(__dirname, '..');
-const DATA_DIR = path.join(ROOT_DIR, 'data');
+const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT_DIR, 'data');
 const NEWS_FILE = path.join(DATA_DIR, 'news.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
@@ -541,10 +541,54 @@ app.patch('/api/auth/profile/:username', async (req, res) => {
             return res.status(400).json({ error: 'Profile can be edited only for approved users.' });
         }
 
-        target.profile = {
-            ...target.profile,
+        const profileUpdates = {
             ...updates
         };
+
+        let hasAdminUpdate = false;
+        let nextAdminValue = false;
+        if (Object.prototype.hasOwnProperty.call(profileUpdates, 'isAdmin')) {
+            if (typeof profileUpdates.isAdmin !== 'boolean') {
+                return res.status(400).json({ error: 'isAdmin must be a boolean.' });
+            }
+            hasAdminUpdate = true;
+            nextAdminValue = profileUpdates.isAdmin;
+            delete profileUpdates.isAdmin;
+        }
+
+        if (Object.keys(profileUpdates).length === 0 && !hasAdminUpdate) {
+            return res.status(400).json({ error: 'No valid updates were provided.' });
+        }
+
+        if (hasAdminUpdate && target.isAdmin && !nextAdminValue) {
+            if (actor === target.username) {
+                return res.status(400).json({ error: 'You cannot remove admin rights from your own account.' });
+            }
+
+            const approvedAdminsCount = users.filter((user) => user.isAdmin && user.status === 'approved').length;
+            if (approvedAdminsCount <= 1) {
+                return res.status(400).json({ error: 'Cannot remove admin rights from the last administrator.' });
+            }
+        }
+
+        target.profile = {
+            ...target.profile,
+            ...profileUpdates
+        };
+
+        if (hasAdminUpdate) {
+            target.isAdmin = nextAdminValue;
+
+            if (!Object.prototype.hasOwnProperty.call(profileUpdates, 'rank')) {
+                if (nextAdminValue && target.profile.rank === 'Игрок') {
+                    target.profile.rank = 'Администратор';
+                }
+
+                if (!nextAdminValue && target.profile.rank === 'Администратор') {
+                    target.profile.rank = 'Игрок';
+                }
+            }
+        }
 
         await persistUsers(users);
         res.json(toPublicUser(target));

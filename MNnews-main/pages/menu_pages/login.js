@@ -266,6 +266,7 @@ function setupAdminPanels() {
             const reputation = String(data.get('reputation') || '').trim();
             const clan = String(data.get('guild') || '').trim();
             const notes = String(data.get('notes') || '').trim();
+            const adminRoleAction = String(data.get('admin_role_action') || '').trim();
 
             if (rank) {
                 updates.rank = rank;
@@ -283,8 +284,14 @@ function setupAdminPanels() {
                 updates.notes = notes;
             }
 
+            if (adminRoleAction === 'grant') {
+                updates.isAdmin = true;
+            } else if (adminRoleAction === 'revoke') {
+                updates.isAdmin = false;
+            }
+
             if (!targetUsername || Object.keys(updates).length === 0) {
-                showLoginError('Заполните ник и хотя бы одно поле для изменения.');
+                showLoginError('Заполните ник и хотя бы одно поле для изменения или выберите действие с админкой.');
                 return;
             }
 
@@ -294,7 +301,13 @@ function setupAdminPanels() {
                     body: JSON.stringify({ actor, updates })
                 });
 
-                showLoginError('Профиль успешно обновлён.');
+                if (adminRoleAction === 'grant') {
+                    showLoginError('Профиль обновлён. Права администратора выданы.');
+                } else if (adminRoleAction === 'revoke') {
+                    showLoginError('Профиль обновлён. Права администратора сняты.');
+                } else {
+                    showLoginError('Профиль успешно обновлён.');
+                }
                 adminPanel.reset();
             } catch (error) {
                 showLoginError(error.message || 'Не удалось обновить профиль.');

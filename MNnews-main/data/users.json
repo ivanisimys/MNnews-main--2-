@@ -29,7 +29,7 @@
     "username": "ivanius46",
     "passwordHash": "scrypt:e17e249196a27dee003a8ee371041779:e7eb5d9f27068ff987f8c3481309eae856310bab36353ce598e0a8cb508799140a42237a41dc79b95aaffe4a13ddd46cece6cd047348ba5f232bb47c78420d49",
     "email": "ivandomrist@gmail.com",
-    "isAdmin": false,
+    "isAdmin": true,
     "status": "approved",
     "profile": {
       "rank": "Игрок",

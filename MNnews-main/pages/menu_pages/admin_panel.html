@@ -6,31 +6,160 @@
     <title>Админ-панель | MNnews</title>
     <link rel="stylesheet" href="/style.css">
     <style>
-        .admin-container { max-width: 900px; margin: 50px auto; padding: 20px; background: #1e1e1e; border-radius: 10px; color: white; }
-        .news-item { background: #2a2a2a; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
-        .news-info { flex-grow: 1; margin-right: 15px; }
-        .news-info h4 { margin: 0 0 5px 0; color: #3498db; }
-        .news-info p { margin: 0; font-size: 0.9em; color: #ccc; }
-        .news-actions button { margin-left: 10px; padding: 8px 12px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: background 0.2s; }
-        .btn-edit { background: #f39c12; color: white; }
-        .btn-edit:hover { background: #e67e22; }
-        .btn-delete { background: #e74c3c; color: white; }
-        .btn-delete:hover { background: #c0392b; }
-        
-        /* Модальное окно */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
-        .modal-content { background: #333; margin: 5% auto; padding: 25px; width: 90%; max-width: 600px; border-radius: 8px; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #aaa; transition: color 0.2s; }
+        :root {
+            --admin-bg: #0f141d;
+            --admin-card-soft: #202b3a;
+            --admin-border: rgba(255, 255, 255, 0.12);
+            --admin-text: #f6f8ff;
+            --admin-muted: #aebad3;
+            --admin-accent: #32a5ff;
+            --admin-accent-strong: #1f88d8;
+            --admin-danger: #d1505d;
+            --admin-danger-strong: #b63d4a;
+            --admin-success: #30ba78;
+            --admin-success-strong: #229e63;
+            --admin-overlay: rgba(4, 8, 18, 0.75);
+            --admin-shadow: 0 18px 38px rgba(0, 0, 0, 0.35);
+        }
+        body {
+            background:
+                radial-gradient(circle at 12% 2%, rgba(50, 165, 255, 0.18), transparent 34%),
+                radial-gradient(circle at 90% 100%, rgba(48, 186, 120, 0.16), transparent 42%),
+                var(--admin-bg);
+            color: var(--admin-text);
+        }
+        .admin-container {
+            max-width: 960px;
+            margin: 40px auto;
+            padding: 24px;
+            background: linear-gradient(145deg, rgba(34, 47, 67, 0.92), rgba(19, 27, 38, 0.92));
+            border: 1px solid var(--admin-border);
+            border-radius: 18px;
+            color: var(--admin-text);
+            box-shadow: var(--admin-shadow);
+            backdrop-filter: blur(6px);
+        }
+        .news-item {
+            background: var(--admin-card-soft);
+            border: 1px solid var(--admin-border);
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .news-info { flex-grow: 1; margin-right: 8px; }
+        .news-info h4 { margin: 0 0 5px 0; color: #6ac2ff; font-size: 1.05rem; }
+        .news-info p { margin: 0; font-size: 0.9em; color: var(--admin-muted); }
+        .news-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .news-actions button {
+            margin: 0;
+            padding: 9px 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+        .news-actions button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.08);
+        }
+        .btn-edit { background: linear-gradient(120deg, #f6ad3e, #e48619); color: white; }
+        .btn-delete { background: linear-gradient(120deg, var(--admin-danger), var(--admin-danger-strong)); color: white; }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--admin-overlay);
+            z-index: 1000;
+            padding: 24px 14px;
+        }
+        .modal-content {
+            background: linear-gradient(150deg, #212d3e, #171f2d);
+            margin: 1% auto;
+            padding: 24px;
+            width: 100%;
+            max-width: 680px;
+            border-radius: 16px;
+            border: 1px solid var(--admin-border);
+            position: relative;
+            box-shadow: var(--admin-shadow);
+        }
+        .modal-content h3 { margin: 0 0 14px; font-size: 1.35rem; }
+        .editor-meta { margin: 0 0 18px; color: var(--admin-muted); font-size: 0.92rem; line-height: 1.45; }
+        .field-group { margin-bottom: 14px; }
+        .field-group label { display: block; color: #d3def4; font-size: 0.92rem; margin-bottom: 8px; font-weight: 600; }
+        .editor-input,
+        .editor-textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(12, 17, 26, 0.7);
+            border: 1px solid rgba(170, 193, 236, 0.24);
+            color: #f9fbff;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .editor-input:focus,
+        .editor-textarea:focus {
+            outline: none;
+            border-color: var(--admin-accent);
+            box-shadow: 0 0 0 3px rgba(50, 165, 255, 0.2);
+        }
+        .editor-textarea { min-height: 180px; resize: vertical; line-height: 1.5; }
+        .field-hint { margin: 8px 0 0; color: var(--admin-muted); font-size: 0.82rem; }
+        .close-modal { position: absolute; top: 12px; right: 16px; font-size: 30px; cursor: pointer; color: #9aa6bd; line-height: 1; transition: color 0.2s; }
         .close-modal:hover { color: white; }
-        
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0 20px 0; background: #444; border: 1px solid #555; color: white; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
-        input:focus, textarea:focus { outline: none; border-color: #3498db; }
-        textarea { height: 150px; resize: vertical; }
-        .btn-save { background: #27ae60; color: white; padding: 12px 20px; border: none; cursor: pointer; border-radius: 4px; width: 100%; font-size: 16px; font-weight: bold; transition: background 0.2s; }
-        .btn-save:hover { background: #2ecc71; }
-        .btn-create-new { background: #3498db; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 16px; font-weight: bold; transition: background 0.2s; }
-        .btn-create-new:hover { background: #2980b9; }
-        h2 { color: white; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .btn-save {
+            background: linear-gradient(120deg, var(--admin-success), var(--admin-success-strong));
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 12px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 700;
+            transition: transform 0.15s ease, filter 0.15s ease;
+            margin-top: 8px;
+        }
+        .btn-save:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.07);
+        }
+        .btn-create-new {
+            background: linear-gradient(120deg, var(--admin-accent), var(--admin-accent-strong));
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 700;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+        .btn-create-new:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.07);
+        }
+        @media (max-width: 700px) {
+            .admin-container { margin: 24px 10px; padding: 16px; border-radius: 14px; }
+            .news-item { flex-direction: column; align-items: flex-start; }
+            .news-actions { width: 100%; }
+            .news-actions button { flex: 1; }
+            .modal-content { padding: 18px; }
+        }
     </style>
 </head>
 <body>
@@ -54,15 +183,21 @@
         <div class="modal-content">
             <span class="close-modal" onclick="closeEditor()">&times;</span>
             <h3 id="modalTitle">Редактор новости</h3>
+            <p class="editor-meta">Заполните поля ниже и сохраните изменения. Текст можно разделять на абзацы пустой строкой.</p>
             <input type="hidden" id="editId">
-            <label for="editTitle" style="color: #ccc; font-size: 0.9em;">Заголовок:</label>
-            <input type="text" id="editTitle" placeholder="Введите заголовок новости">
-            
-            <label for="editImage" style="color: #ccc; font-size: 0.9em;">Ссылка на изображение (URL):</label>
-            <input type="text" id="editImage" placeholder="https://example.com/image.jpg">
-            
-            <label for="editContent" style="color: #ccc; font-size: 0.9em;">Текст новости:</label>
-            <textarea id="editContent" placeholder="Введите текст новости..."></textarea>
+            <div class="field-group">
+                <label for="editTitle">Заголовок</label>
+                <input class="editor-input" type="text" id="editTitle" placeholder="Введите заголовок новости">
+            </div>
+            <div class="field-group">
+                <label for="editImage">Изображение (URL)</label>
+                <input class="editor-input" type="text" id="editImage" placeholder="https://example.com/image.jpg">
+                <p class="field-hint">Оставьте поле пустым, если картинка не нужна.</p>
+            </div>
+            <div class="field-group">
+                <label for="editContent">Текст новости</label>
+                <textarea class="editor-textarea" id="editContent" placeholder="Введите текст новости..."></textarea>
+            </div>
             
             <button onclick="saveNews()" class="btn-save">Сохранить изменения</button>
         </div>
@@ -160,9 +295,9 @@
         // Сохранение новости
         async function saveNews() {
             const id = document.getElementById('editId').value;
-            const title = document.getElementById('editTitle').value;
-            const image = document.getElementById('editImage').value;
-            const content = document.getElementById('editContent').value;
+            const title = document.getElementById('editTitle').value.trim();
+            const image = document.getElementById('editImage').value.trim();
+            const content = document.getElementById('editContent').value.trim();
             const username = localStorage.getItem('name');
 
             if (!title || !content) {
@@ -196,10 +331,11 @@
 
         // Удаление новости
         async function deleteNews(id) {
+            const actor = localStorage.getItem('name');
             if (!confirm('Вы уверены, что хотите удалить эту новость?')) return;
             
             try {
-                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                await fetch(`${API_URL}/${id}?actor=${encodeURIComponent(actor || '')}`, { method: 'DELETE' });
                 loadNewsList();
             } catch (err) {
                 console.error(err);

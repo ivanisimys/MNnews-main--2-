@@ -161,6 +161,16 @@
             <textarea id="admin-notes" name="notes" rows="4" placeholder="Дополнительная информация об игроке..."></textarea>
         </div>
 
+        <div class="form-group admin-toggle-group">
+            <label for="admin-role-action">Права администратора:</label>
+            <select id="admin-role-action" name="admin_role_action" class="admin-role-select">
+                <option value="">Без изменений</option>
+                <option value="grant">Выдать админку</option>
+                <option value="revoke">Снять админку</option>
+            </select>
+            <p class="admin-toggle-hint">Снять права у самого себя и у последнего администратора нельзя.</p>
+        </div>
+
         <div class="action-buttons">
             <button type="submit" class="btn-apply">Применить изменения</button>
         </div>

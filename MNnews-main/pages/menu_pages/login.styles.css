@@ -305,6 +305,40 @@ h2 {
     margin-bottom: 14px;
 }
 
+.admin-toggle-group {
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+.admin-toggle-group label {
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.admin-role-select {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    background: color-mix(in srgb, var(--card) 94%, #ffffff 6%);
+    color: var(--text);
+}
+
+.admin-role-select:focus {
+    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    border-color: var(--accent);
+}
+
+.admin-toggle-hint {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
 .action-buttons {
     margin-top: 8px;
 }
